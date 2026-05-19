@@ -1,0 +1,179 @@
+# =============================================================
+# .claudeignore — 告诉 Claude Code 跳过以下文件/目录
+# 语法与 .gitignore 完全相同
+# 作用：减少 Claude 读入的无效上下文，显著降低对话卡顿
+# =============================================================
+
+# ── 依赖目录（体积巨大，无需分析）──────────────────────────
+node_modules/
+vendor/
+.venv/
+venv/
+env/
+.env/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+site-packages/
+bower_components/
+
+# ── 锁文件（内容庞大且自动生成）────────────────────────────
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+composer.lock
+Gemfile.lock
+poetry.lock
+Pipfile.lock
+cargo.lock
+
+# ── 构建产物 & 编译输出 ─────────────────────────────────────
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+target/
+bin/
+obj/
+*.min.js
+*.min.css
+*.bundle.js
+*.chunk.js
+*.map
+
+# ── 测试覆盖率报告 ──────────────────────────────────────────
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+lcov.info
+*.lcov
+
+# ── 缓存目录 ────────────────────────────────────────────────
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+.stylelintcache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+*.tsbuildinfo
+.sass-cache/
+
+# ── 日志文件 ────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ── 媒体 & 二进制资源（Claude 无法处理）────────────────────
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.svg
+*.ico
+*.bmp
+*.tiff
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.otf
+*.pdf
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.gz
+
+# ── 编译型二进制 ────────────────────────────────────────────
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.o
+*.class
+*.jar
+*.war
+*.ear
+*.wasm
+
+# ── 数据库 & 大数据文件 ─────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+*.csv
+*.tsv
+*.parquet
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+
+# ── 环境变量 & 密钥（安全 + 减少泄露风险）──────────────────
+.env
+.env.*
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# ── IDE & 编辑器配置 ────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 文档 & 静态站点生成物 ───────────────────────────────────
+docs/_build/
+docs/site/
+_site/
+.docusaurus/
+storybook-static/
+
+# ── 测试快照（体积可能较大）────────────────────────────────
+**/__snapshots__/
+*.snap
+
+# ── Terraform / IaC 状态文件 ────────────────────────────────
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# ── Docker ──────────────────────────────────────────────────
+.docker/
+
+# ── 其他自动生成文件 ────────────────────────────────────────
+*.generated.*
+*.auto.*
+generated/
+auto-generated/
