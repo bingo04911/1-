@@ -425,6 +425,28 @@ def audit_resilience(
             "备用线路换一个独立域名（最好不同注册商），避免连坐",
         ))
 
+    # 3b. 同一主机上的多个入口：不构成冗余，只增加探测面
+    by_host: dict[str, list[ProxyNode]] = {}
+    for n in pool:
+        by_host.setdefault(n.host.lower(), []).append(n)
+    for host, group in by_host.items():
+        if len(group) < 2:
+            continue
+        names = ", ".join(n.name for n in group)
+        ports = {n.port for n in group}
+        detail = (
+            "端口相同，属于完全重复的入口" if len(ports) == 1
+            else "端口不同，只能应对端口级封锁，挡不住 IP 黑洞和主机故障"
+        )
+        out.append(Finding(
+            LOW, group[0].line, "[Proxy]",
+            f"{len(group)} 个节点指向同一主机 {host}（{names}）—— {detail}。"
+            "它们同生共死，不计入冗余，但每个入口都是一个额外的主动探测面",
+            "只保留必要的入口；真正的冗余需要不同主机。"
+            "若想在同一台机器上获得两种失效路径，"
+            "让其中一个入口走 CDN —— CDN 回源不经过 GFW，源站 IP 被墙后仍可用",
+        ))
+
     # 4. 裸 IP 线路占比：无法通过改解析快速迁移
     ip_nodes = [n for n in pool if IPV4_RE.match(n.host or "")]
     if all_real and ip_nodes and len(ip_nodes) == len(pool):
