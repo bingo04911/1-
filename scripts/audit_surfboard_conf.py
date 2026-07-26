@@ -362,6 +362,18 @@ def audit_rules(lines: list[tuple[int, str]]) -> list[Finding]:
                     "都会带着真实 IP 明文直连",
                     "改为 FINAL,<你的代理策略组>，让兜底走代理",
                 ))
+        # GEOIP / IP-CIDR 少了 no-resolve：每个走到这里的域名都会被本地解析一次
+        if upper.startswith(("GEOIP", "IP-CIDR", "IP-CIDR6", "IP-ASN")):
+            if "NO-RESOLVE" not in upper:
+                out.append(Finding(
+                    MEDIUM, lineno, "[Rule]",
+                    f"{line.split(',')[0].strip()} 规则缺少 no-resolve —— "
+                    "为了判断 IP 归属，客户端必须先在本地解析域名，"
+                    "你访问过的每一个域名都会因此暴露给本地 DNS 服务商（DNS 泄漏的主因）",
+                    "在规则末尾加 ,no-resolve，让它只对 IP 目标生效；"
+                    "国内分流改用域名列表 RULE-SET，域名匹配不需要解析",
+                ))
+
         # 明文的规则集/策略订阅可被中间人替换，等于把分流规则交给对方控制
         if ("RULE-SET" in upper or "DOMAIN-SET" in upper) and "HTTP://" in upper:
             out.append(Finding(
