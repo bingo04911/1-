@@ -9,6 +9,8 @@
 | --- | --- |
 | `surfboard/surfboard.conf` | 硬化过的配置模板，替换占位符后直接可用 |
 | `surfboard/anti-blocking.md` | **抗封锁手册**：节点被墙的诊断、对抗与恢复剧本 |
+| `surfboard/deployment-3-lines.md` | 实战方案：1 中转 + 2 台搬瓦工的三层改造 |
+| `surfboard/examples/3-lines.conf` | 上述方案的可用配置 |
 | `scripts/audit_surfboard_conf.py` | 扫描现有配置，逐条报出问题与修法 |
 
 本文档解决的是「流量不被解密、不泄漏」；
