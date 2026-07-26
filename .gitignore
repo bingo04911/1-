@@ -1,0 +1,9 @@
+# 含真实节点凭据的本地配置，绝不入库
+*.local.conf
+*.private.conf
+secrets/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
