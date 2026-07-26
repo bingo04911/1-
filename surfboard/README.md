@@ -11,7 +11,8 @@
 | `surfboard/anti-blocking.md` | **抗封锁手册**：节点被墙的诊断、对抗与恢复剧本 |
 | `surfboard/deployment-single-origin.md` | 实战方案：单台自有 VPS + 第三方订阅 |
 | `surfboard/android-leaks.md` | 手机端 DNS / WebRTC 泄漏的实际状况与修复 |
-| `surfboard/examples/single-origin.conf` | 上述方案的可用配置 |
+| `surfboard/examples/leakfix-now.conf` | **立即可用**：只修泄漏，节点用现有订阅，不动服务器 |
+| `surfboard/examples/single-origin.conf` | 上述方案的可用配置（需先搭好 CDN 层） |
 | `scripts/audit_surfboard_conf.py` | 扫描现有配置，逐条报出问题与修法 |
 
 本文档解决的是「流量不被解密、不泄漏」；
