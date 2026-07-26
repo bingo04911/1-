@@ -313,6 +313,15 @@ def audit_general(lines: list[tuple[int, str]]) -> list[Finding]:
             "改为 REJECT",
         ))
 
+    # STUN 进了 always-real-ip：等于给 WebRTC 的真实网络位置探测开绿灯
+    real_ip = get("always-real-ip")
+    if real_ip and re.search(r"stun", real_ip[1], re.IGNORECASE):
+        out.append(Finding(
+            LOW, real_ip[0], "[General]",
+            "always-real-ip 中包含 STUN 域名，WebRTC 会拿到真实解析结果",
+            "移除 stun.* 相关条目；只有主机游戏需要 NAT 穿透时才保留",
+        ))
+
     # 本地监听暴露面
     for key in ("http-listen", "socks5-listen", "http-api"):
         item = get(key)

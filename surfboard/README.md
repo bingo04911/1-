@@ -10,6 +10,7 @@
 | `surfboard/surfboard.conf` | 硬化过的配置模板，替换占位符后直接可用 |
 | `surfboard/anti-blocking.md` | **抗封锁手册**：节点被墙的诊断、对抗与恢复剧本 |
 | `surfboard/deployment-single-origin.md` | 实战方案：单台自有 VPS + 第三方订阅 |
+| `surfboard/android-leaks.md` | 手机端 DNS / WebRTC 泄漏的实际状况与修复 |
 | `surfboard/examples/single-origin.conf` | 上述方案的可用配置 |
 | `scripts/audit_surfboard_conf.py` | 扫描现有配置，逐条报出问题与修法 |
 
