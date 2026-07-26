@@ -138,7 +138,7 @@ def _is_true(value: str | None) -> bool:
 
 def audit_nodes(nodes: list[ProxyNode]) -> list[Finding]:
     out: list[Finding] = []
-    seen_secrets: dict[str, str] = {}
+    seen_secrets: dict[str, tuple[str, str]] = {}
 
     for n in nodes:
         tls_on = n.kind in TLS_PROTOCOLS or _is_true(n.opts.get("tls"))
@@ -250,13 +250,15 @@ def audit_nodes(nodes: list[ProxyNode]) -> list[Finding]:
         # 10. 凭据复用
         secret = n.opts.get("password") or n.opts.get("username")
         if secret and not PLACEHOLDER_RE.search(secret):
-            if secret in seen_secrets and seen_secrets[secret] != n.name:
+            prior = seen_secrets.get(secret)
+            # 同一主机的多个入口本来就是同一个后端，共用凭据是必然的，不算复用
+            if prior and prior[0] != n.name and prior[1] != n.host.lower():
                 out.append(Finding(
                     MEDIUM, n.line, n.name,
-                    f"与节点 {seen_secrets[secret]} 复用同一组凭据",
+                    f"与节点 {prior[0]} 复用同一组凭据（不同主机）",
                     "每个节点用独立密码/UUID，单点泄露不至于全线沦陷",
                 ))
-            seen_secrets.setdefault(secret, n.name)
+            seen_secrets.setdefault(secret, (n.name, n.host.lower()))
             if len(secret) < 16:
                 out.append(Finding(
                     MEDIUM, n.line, n.name,
