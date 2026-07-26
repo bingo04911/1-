@@ -8,7 +8,11 @@
 | 文件 | 用途 |
 | --- | --- |
 | `surfboard/surfboard.conf` | 硬化过的配置模板，替换占位符后直接可用 |
+| `surfboard/anti-blocking.md` | **抗封锁手册**：节点被墙的诊断、对抗与恢复剧本 |
 | `scripts/audit_surfboard_conf.py` | 扫描现有配置，逐条报出问题与修法 |
+
+本文档解决的是「流量不被解密、不泄漏」；
+「节点被封之后还能不能上网」在 [`anti-blocking.md`](anti-blocking.md)。
 
 ## 先扫一遍你现在在用的配置
 

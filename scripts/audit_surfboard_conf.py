@@ -371,6 +371,94 @@ def audit_rules(lines: list[tuple[int, str]]) -> list[Finding]:
     return out
 
 
+def _base_domain(host: str) -> str:
+    """取可注册域名（粗略：末两段；对 .com.cn / .co.uk 之类取末三段）。"""
+    if not host or IPV4_RE.match(host):
+        return ""
+    parts = host.lower().rstrip(".").split(".")
+    if len(parts) < 2:
+        return ""
+    if len(parts) >= 3 and parts[-2] in {"com", "net", "org", "gov", "edu", "co"}:
+        return ".".join(parts[-3:])
+    return ".".join(parts[-2:])
+
+
+def audit_resilience(
+    nodes: list[ProxyNode], sections: dict[str, list[tuple[int, str]]]
+) -> list[Finding]:
+    """抗封锁结构检查：被封之后还有没有退路。"""
+    out: list[Finding] = []
+    if not nodes:
+        return out
+
+    # 域名/IP 相关的检查只对真实主机名有意义，模板占位符跳过，避免噪声
+    pool = [n for n in nodes if n.host and not PLACEHOLDER_RE.search(n.host)]
+
+    # 1. 线路数量
+    if len(nodes) < 2:
+        out.append(Finding(
+            HIGH, nodes[0].line, "[Proxy]",
+            "只有 1 条线路，节点一旦被封即完全断网，且没有恢复通道",
+            "至少准备 3 条：直连主力 + CDN 保底 + 冷备，且分属不同 ASN / 机房",
+        ))
+
+    # 2. 有没有 CDN 保底层（ws + tls 才能挂 CDN）
+    has_cdn = any(_is_true(n.opts.get("ws")) and _is_true(n.opts.get("tls")) for n in nodes)
+    if not has_cdn:
+        out.append(Finding(
+            HIGH, nodes[0].line, "[Proxy]",
+            "没有任何 WebSocket+TLS 节点，即缺少可走 CDN 的保底线路。"
+            "所有节点都直连源站 IP，IP 进黑洞后无退路",
+            "加一条 vmess/trojan + ws=true + tls=true 走 CDN 的节点。"
+            "CDN 用的是 anycast IP，针对性封锁的附带损害极高，是最难被封的一层",
+        ))
+
+    # 只有在所有节点都是真实主机名时，才能下「全部节点如何如何」的结论
+    all_real = len(pool) == len(nodes)
+
+    # 3. 域名集中度：全挂在一个域名下，域名被针对就是团灭
+    domains = {d for d in (_base_domain(n.host) for n in pool) if d}
+    if all_real and len(pool) >= 2 and len(domains) == 1:
+        out.append(Finding(
+            MEDIUM, pool[0].line, "[Proxy]",
+            f"全部节点都在同一个域名 {domains.pop()} 下，域名级封锁会一次带走所有线路",
+            "备用线路换一个独立域名（最好不同注册商），避免连坐",
+        ))
+
+    # 4. 裸 IP 线路占比：无法通过改解析快速迁移
+    ip_nodes = [n for n in pool if IPV4_RE.match(n.host or "")]
+    if all_real and ip_nodes and len(ip_nodes) == len(pool):
+        out.append(Finding(
+            MEDIUM, ip_nodes[0].line, "[Proxy]",
+            "所有节点都用裸 IP，IP 被封后必须逐条改客户端配置才能恢复",
+            "改用域名接入，被封时只需改 A 记录，客户端零改动",
+        ))
+
+    # 5. 故障转移探测参数：间隔太长 = 被封了很久才发现
+    for lineno, line in sections.get("Proxy Group", []):
+        low = line.lower()
+        if "fallback" not in low and "url-test" not in low:
+            continue
+        interval = re.search(r"interval\s*=\s*(\d+)", low)
+        if interval and int(interval.group(1)) > 300:
+            out.append(Finding(
+                LOW, lineno, "[Proxy Group]",
+                f"探测间隔 {interval.group(1)}s 过长，节点被封后最久要等这么久才切换",
+                "抗封锁场景建议 interval=180、timeout=3，代价只是少量探测流量",
+            ))
+        url = re.search(r"url\s*=\s*(\S+?)(?:,|$)", line, re.IGNORECASE)
+        if url and re.search(r"baidu|qq\.com|taobao|aliyun|hicloud|vivo|xiaomi|163\.com",
+                             url.group(1), re.IGNORECASE):
+            out.append(Finding(
+                MEDIUM, lineno, "[Proxy Group]",
+                "策略组探测 URL 指向国内地址，节点即使已被墙也会被判为可用，"
+                "故障转移永远不会触发",
+                "改为 http://cp.cloudflare.com/generate_204",
+            ))
+
+    return out
+
+
 def audit_misc(text: str, sections: dict[str, list[tuple[int, str]]]) -> list[Finding]:
     out: list[Finding] = []
 
@@ -418,6 +506,7 @@ def audit(path: Path) -> list[Finding]:
     findings += audit_nodes(nodes)
     findings += audit_general(sections.get("General", []))
     findings += audit_rules(sections.get("Rule", []))
+    findings += audit_resilience(nodes, sections)
     findings += audit_misc(text, sections)
     findings.sort(key=lambda f: (_ORDER[f.severity], f.line))
     return findings
