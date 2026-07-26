@@ -461,7 +461,8 @@ def audit_resilience(
         low = line.lower()
         if "fallback" not in low and "url-test" not in low:
             continue
-        interval = re.search(r"interval\s*=\s*(\d+)", low)
+        # 负向后顾：别把 update-interval 误当成探测间隔
+        interval = re.search(r"(?<![\w-])interval\s*=\s*(\d+)", low)
         if interval and int(interval.group(1)) > 300:
             out.append(Finding(
                 LOW, lineno, "[Proxy Group]",
